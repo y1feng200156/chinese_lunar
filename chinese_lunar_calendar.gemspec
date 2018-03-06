@@ -1,16 +1,16 @@
 # encoding: utf-8
 
-require File.expand_path('../lib/chinese_lunar/version', __FILE__)
+require File.expand_path('../lib/chinese_lunar_calendar/version', __FILE__)
 
 Gem::Specification.new do |s|
-  s.name          = "chinese_lunar"
-  s.version       = ChineseLunar::VERSION
+  s.name          = "chinese_lunar_calendar"
+  s.version       = ChineseLunarCalendar::VERSION
 
   s.authors       = ["Lanvige Jiang"]
   s.email         = ["lanvige@gmail.com"]
   s.description   = %q{Generate the Lunar date}
   s.summary       = %q{Generate the Lunar date}
-  s.homepage      = "https://github.com/lanvige/chinese_lunar"
+  s.homepage      = "https://github.com/y1feng200156/chinese_lunar"
 
   s.files        = `git ls-files`.split("\n")
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})

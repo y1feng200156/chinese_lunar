@@ -1,7 +1,7 @@
 # encoding: utf-8
 # Modify from http://my.oschina.net/tomsu/blog/700
 
-module ChineseLunar
+module ChineseLunarCalendar
   class Lunar
 
     @@lunar_info = [0x04bd8, 0x04ae0, 0x0a570,
@@ -30,7 +30,7 @@ module ChineseLunar
     @@nstr = ["", "正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
     @@gan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
     @@zhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-    @@nnimals = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"]
+    @@animals = ["猪", "鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗"]
 
     attr_reader :Date
 
@@ -39,23 +39,47 @@ module ChineseLunar
     end
 
     # Get Lundar date in Chinese text
-    def lunar_date_in_chinese() 
-      l = convert(@date.year, @date.month, @date.day)
-      cyclical_year(l[0]) + "年 " + @@nstr[l[1]] + "月 " + get_day_in_chinese(l[2])
+    def date_in_chinese
+      @l ||= convert(@date.year, @date.month, @date.day)
+      pp @l
+      @year ||= cyclical_year(@l[0])
+      @month ||= @@nstr[@l[1]]
+      @day ||= get_day_in_chinese(@l[2])
+      @animal ||= __animal @l
+      "#{@year}（#{@animal}）年 #{@month}月 #{@day}"
     end
 
-    def lunar_date_year_in_chinese()
-      l = convert(@date.year, @date.month, @date.day)
-      cyclical_year(l[0])
+    def year_in_chinese
+      date_in_chinese
+      @year
     end
 
     # Get the Lundar date in 'xxxx-xx-xx' fromat
-    def lunar_date() 
-      l = convert(@date.year, @date.month, @date.day)
-      l[0].to_s + "-" + l[1].to_s + "-" + (/^\d+/.match(l[2].to_s)).to_s
+    def lunar_date()
+      date_in_chinese
+      @l[0].to_s + "-" + @l[1].to_s + "-" + (/^\d+/.match(@l[2].to_s)).to_s
     end
 
-  private
+    def month_in_chinese
+      date_in_chinese
+      @month
+    end
+
+    def day_in_chinese
+      date_in_chinese
+      @day
+    end
+
+    def animal
+      date_in_chinese
+      @animal
+    end
+
+    private
+
+    def __animal(l)
+      @@animals[(l[0] - 1899) % 12]
+    end
 
     def cyclical_year(y)
       num = y - 1900 + 36
@@ -69,16 +93,16 @@ module ChineseLunar
     # 传出y年m月d日对应的农历.
     # year0 .month1 .day2 .yearCyl3 .monCyl4 .dayCyl5 .isLeap6
     def convert(y, m, d)
-      nongDate = []   
+      nongDate = []
       i = 0
       temp = 0
       leap = 0
       baseDate = Date.new(0 + 1900, 1, 31)
-         
-      objDate = Date.new(y, m, d);
+
+      objDate = Date.new(y, m, d)
       offset = objDate - baseDate
-      nongDate[5] = offset + 40;
-      nongDate[4] = 14;
+      nongDate[5] = offset + 40
+      nongDate[4] = 14
 
       i = 1900
       while (i < 2050 && offset > 0)
@@ -106,47 +130,47 @@ module ChineseLunar
         if (leap > 0 && i == (leap + 1) && nongDate[6] == 0)
           i -= 1
           nongDate[6] = 1
-          temp = leap_days( nongDate[0])
-        else  
-          temp = monthDays( nongDate[0], i)
-        end   
+          temp = leap_days(nongDate[0])
+        else
+          temp = monthDays(nongDate[0], i)
+        end
 
-        #解除闰月   
+        #解除闰月
         if (nongDate[6] == 1 && i == (leap + 1))
-          nongDate[6] = 0  
-        end   
-          offset -= temp   
-          if (nongDate[6] == 0)   
-            nongDate[4] += 1  
-        end   
+          nongDate[6] = 0
+        end
+          offset -= temp
+          if (nongDate[6] == 0)
+            nongDate[4] += 1
+        end
 
-        i += 1  
-      end   
-      
+        i += 1
+      end
+
       if (offset == 0 && leap > 0 && i == leap + 1)
         if (nongDate[6] == 1)
           nongDate[6] = 0
-        else  
+        else
           nongDate[6] = 1
-          i -= 1  
-          nongDate[4] -= 1  
+          i -= 1
+          nongDate[4] -= 1
         end
-      end   
-      
+      end
+
       if (offset < 0)
         offset += temp
         i -= 1
         nongDate[4] -= 1
       end
-      
+
       nongDate[1] = i
       nongDate[2] = offset + 1
-    
+
       nongDate
     end
 
     def get_day_in_chinese(day)
-      a = ""  
+      a = ""
         if (day == 10)
           return "初十"
         elsif (day == 20)
@@ -154,24 +178,24 @@ module ChineseLunar
         elsif (day == 30)
           return "三十"
       end
-             
+
       two = ((day) / 10).to_i()
 
-      if (two == 0)   
-        a = "初"  
-      elsif (two == 1)   
+      if (two == 0)
+        a = "初"
+      elsif (two == 1)
         a = "十"
-      elsif (two == 2)   
+      elsif (two == 2)
         a = "廿"
-      elsif (two == 3)   
+      elsif (two == 3)
         a = "三"
       else
-        a = "ERROR"  
-      end   
-      
-      one =  (day % 10)   
-    
-      case one   
+        a = "ERROR"
+      end
+
+      one =  (day % 10)
+
+      case one
         when 1 then a += "一"
         when 2 then a += "二"
         when 3 then a += "三"
@@ -182,42 +206,42 @@ module ChineseLunar
         when 8 then a += "八"
         when 9 then a += "九"
       end
-      
-      return a 
+
+      return a
     end
 
     # Return the days in lunar of y year.
     def days_in_lunar_date(y)
-      sum = 348  
-      i = 0x8000  
-      while i > 0x8  
-        if ((@@lunar_info[y - 1900] & i) != 0)   
-          sum += 1  
-        end   
-        i >>= 1  
+      sum = 348
+      i = 0x8000
+      while i > 0x8
+        if ((@@lunar_info[y - 1900] & i) != 0)
+          sum += 1
+        end
+        i >>= 1
       end
-    
+
       sum + leap_days(y)
-    end   
+    end
 
     # Return the leap days in y year.
     def leap_days(y)
-       if (leap_month(y) != 0)    
-         if ((@@lunar_info[y - 1900] & 0x10000) != 0)   
-           return 30  
-         else  
-           return 29  
-         end   
-       else  
-         return 0  
+       if (leap_month(y) != 0)
+         if ((@@lunar_info[y - 1900] & 0x10000) != 0)
+           return 30
+         else
+           return 29
+         end
+       else
+         return 0
        end
-    end   
+    end
 
-    #传回农历 y年闰哪个月 1-12 , 没闰传回 0  
+    #传回农历 y年闰哪个月 1-12 , 没闰传回 0
     def leap_month(y)
       @@lunar_info[y - 1900] & 0xf
     end
-    
+
     # Return the days of m month in y year.
     def  monthDays(y, m)
       if ((@@lunar_info[y - 1900] & (0x10000 >> m)) == 0)
